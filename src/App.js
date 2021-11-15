@@ -57,6 +57,7 @@ function App() {
         {isLoggedIn ? "Log Out" : "Log In"}
       </button>
       {isLoggedIn && <Secret data={swCharacter} />}
+      {user}
     </div>
   );
 }
