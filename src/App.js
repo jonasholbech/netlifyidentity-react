@@ -36,6 +36,7 @@ function App() {
     <div className="App">
       <button onClick={() => netlifyIdentity.open()}>Login</button>
       {token}
+      {isLoggedIn}
     </div>
   );
 }
