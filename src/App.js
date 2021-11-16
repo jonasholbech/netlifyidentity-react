@@ -42,6 +42,7 @@ export default function App(){
           <Home path="/" />
           <About path="/about" />
           <PrivateRoute as={Dashboard} path="/dashboard" />
+          
         </Router>
       </UserContext.Provider>
   )
@@ -85,12 +86,14 @@ function Dashboard() {
   return <><Nav /><div>Protected dashboard {user.user_metadata.full_name}</div></>;
 }
 function Nav(){
+  const {user} = useContext(UserContext)
   return (
     <nav>
       <Link to="/">Home</Link>
       <Link to="/dashboard">Dashboard</Link>
       
       <Link to="/about">about</Link>
+      {user && <button onClick={()=>netlifyIdentity.logout()}>Log Out</button>}
     </nav>
   )
 }
