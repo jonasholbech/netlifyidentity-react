@@ -1,67 +1,96 @@
-import "./App.css";
-import { useEffect, useState } from "react";
+import { useEffect, createContext, useContext, useState } from "react";
 import netlifyIdentity from "netlify-identity-widget";
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const [swCharacter, setSwCharacter] = useState(null);
-  async function listTasks(token) {
-    let response = await fetch("/.netlify/functions/addTask", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await response.json();
-    console.log(data);
-    setSwCharacter(data);
-  }
+import {Router, Link} from "@reach/router"
+let UserContext = createContext({
+  authUser: null,
+  setAuthUser: (user) => {},
+});
+
+export default function App(){
+  const [user,setUser] = useState(null);
+  //const { authUser,setAuthUser } = useContext(UserContext);
   useEffect(() => {
     netlifyIdentity.on("init", (user) => {
       console.log("init ran, doing nothing");
-      /*if (user) {
-        listTasks(user.token.access_token);
-        setUser(user);
-
-        setIsLoggedIn(true);
-      }*/
+      setUser(user);
     });
     netlifyIdentity.on("login", (user) => {
       console.log("login ran");
-      listTasks(user.token.access_token);
+      //listTasks(user.token.access_token);
       setUser(user);
-      setIsLoggedIn(true);
+      //setIsLoggedIn(true);
+      netlifyIdentity.refresh().then((jwt) => {
+        //console.log(jwt)
+      });
     });
     netlifyIdentity.on("logout", () => {
       console.log("logout ran");
       setUser(null);
-      setIsLoggedIn();
+      //setIsLoggedIn();
     });
     //apparently, register eventlisteners before init
     netlifyIdentity.init();
     console.log("init");
-  }, []);
+  }, [setUser]);
 
   netlifyIdentity.on("error", (err) => console.error("Error", err));
   netlifyIdentity.on("open", () => console.log("Widget opened"));
   netlifyIdentity.on("close", () => console.log("Widget closed"));
-  function handleLoginButton() {
-    if (isLoggedIn) {
-      netlifyIdentity.logout();
-    } else {
+  return (
+    <UserContext.Provider value={{ user, setUser }}>
+        <Router>
+          <Home path="/" />
+          <About path="/about" />
+          <PrivateRoute as={Dashboard} path="/dashboard" />
+        </Router>
+      </UserContext.Provider>
+  )
+}
+
+function PrivateRoute({ as: Comp, ...props }){
+    const {user} = useContext(UserContext);
+    //console.log(user)
+    return user ? <Comp {...props} /> : <Login />;
+}
+
+function Login(){
+  function handleLoginButton() {  
       netlifyIdentity.open();
-    }
   }
   return (
-    <div className="App">
-      <button onClick={handleLoginButton}>
-        {isLoggedIn ? "Log Out" : "Log In"}
+    <div>
+  <Nav />
+  <button onClick={handleLoginButton}>
+        Log In
       </button>
-      {isLoggedIn && <Secret data={swCharacter} />}
-      {user}
-    </div>
+  </div>)
+}
+
+
+function Home() {
+  return (
+    <>
+    <Nav />
+    <div>home</div>
+    </>
   );
 }
-function Secret(props) {
-  return <pre>{JSON.stringify(props.data, null, 2)}</pre>;
+
+function About() {
+  return <><Nav /><div>about</div></>;
 }
-export default App;
+
+function Dashboard() {
+  const {user} = useContext(UserContext);
+  return <><Nav /><div>Protected dashboard {user.user_metadata.full_name}</div></>;
+}
+function Nav(){
+  return (
+    <nav>
+      <Link to="/">Home</Link>
+      <Link to="/dashboard">Dashboard</Link>
+      
+      <Link to="/about">about</Link>
+    </nav>
+  )
+}

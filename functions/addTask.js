@@ -6,7 +6,20 @@ exports.handler = async (evt, ctx) => {
   console.log(ctx.clientContext);
   const user = ctx.clientContext.user;
   //task.userId = user.sub;
+  //TODO: return function instead of duplicate
+  //TODO: hvad hvis swapi fejler?
   console.log(user);
+  if (!user) {
+    return {
+      statusCode: 401,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Authorization, Content-Type",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ error: "Not authorized" }),
+    };
+  }
   const response = await fetch("https://swapi.dev/api/people/1/");
   const tasks = await response.json();
   // https://swapi.dev/api/people/1/
